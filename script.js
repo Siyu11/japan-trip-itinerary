@@ -47,27 +47,108 @@ try {
 document.querySelector('#print-button').addEventListener('click', () => window.print());
 
 const prepStorageKey = 'japan-2026-preparation-checklist';
+const prepItemsStorageKey = 'japan-2026-preparation-items';
+const defaultPrepItems = [
+  { id: 'passport', label: 'Passport' },
+  { id: 'sim-card', label: 'SIM Card' },
+  { id: 'suica-card', label: 'Suica Card' },
+  { id: 'visit-japan-web', label: 'Visit Japan Web', href: 'https://www.vjw.digital.go.jp/', linkLabel: 'Entry Form ↗' },
+  { id: 'visa', label: 'Visa' },
+  { id: 'travel-insurance', label: 'Travel Insurance' },
+  { id: 'medicine', label: 'Medicine' }
+];
 let prepState = {};
+let prepItems = [...defaultPrepItems];
 
 try {
   prepState = JSON.parse(localStorage.getItem(prepStorageKey) || '{}');
+  const savedPrepItems = JSON.parse(localStorage.getItem(prepItemsStorageKey) || 'null');
+  if (Array.isArray(savedPrepItems)) prepItems = savedPrepItems;
 } catch {
   prepState = {};
+  prepItems = [...defaultPrepItems];
 }
 
-document.querySelectorAll('[data-prep]').forEach((checkbox) => {
-  checkbox.checked = Boolean(prepState[checkbox.dataset.prep]);
-  checkbox.closest('.prep-item')?.classList.toggle('checked', checkbox.checked);
-  checkbox.addEventListener('change', () => {
-    prepState[checkbox.dataset.prep] = checkbox.checked;
-    checkbox.closest('.prep-item')?.classList.toggle('checked', checkbox.checked);
-    try {
-      localStorage.setItem(prepStorageKey, JSON.stringify(prepState));
-    } catch {
-      // Checklist interaction still works when browser storage is unavailable.
+const prepChecklist = document.querySelector('#prep-checklist');
+const prepAddForm = document.querySelector('#prep-add-form');
+const prepNewItem = document.querySelector('#prep-new-item');
+
+function savePrepData() {
+  try {
+    localStorage.setItem(prepStorageKey, JSON.stringify(prepState));
+    localStorage.setItem(prepItemsStorageKey, JSON.stringify(prepItems));
+  } catch {
+    // Checklist interaction still works when browser storage is unavailable.
+  }
+}
+
+function renderPrepItems() {
+  prepChecklist.replaceChildren();
+
+  prepItems.forEach((item) => {
+    const row = document.createElement('div');
+    row.className = 'prep-item';
+    row.classList.toggle('checked', Boolean(prepState[item.id]));
+
+    const details = document.createElement('div');
+    const label = document.createElement('strong');
+    label.textContent = item.label;
+    details.appendChild(label);
+
+    if (item.href) {
+      const link = document.createElement('a');
+      link.href = item.href;
+      link.target = '_blank';
+      link.rel = 'noreferrer';
+      link.textContent = item.linkLabel || 'Open ↗';
+      details.appendChild(link);
     }
+
+    const controls = document.createElement('div');
+    controls.className = 'prep-item-controls';
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'prep-delete-button';
+    removeButton.setAttribute('aria-label', `Delete ${item.label}`);
+    removeButton.title = 'Delete';
+    removeButton.textContent = '×';
+    removeButton.addEventListener('click', () => {
+      prepItems = prepItems.filter((prepItem) => prepItem.id !== item.id);
+      delete prepState[item.id];
+      savePrepData();
+      renderPrepItems();
+    });
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.dataset.prep = item.id;
+    checkbox.checked = Boolean(prepState[item.id]);
+    checkbox.setAttribute('aria-label', `Mark ${item.label} complete`);
+    checkbox.addEventListener('change', () => {
+      prepState[item.id] = checkbox.checked;
+      row.classList.toggle('checked', checkbox.checked);
+      savePrepData();
+    });
+
+    controls.append(removeButton, checkbox);
+    row.append(details, controls);
+    prepChecklist.appendChild(row);
   });
+}
+
+prepAddForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const label = prepNewItem.value.trim();
+  if (!label) return;
+  prepItems.push({ id: `custom-${Date.now()}`, label });
+  prepNewItem.value = '';
+  savePrepData();
+  renderPrepItems();
+  prepNewItem.focus();
 });
+
+renderPrepItems();
 
 const visitedStorageKey = 'japan-2026-visited-stops';
 let visitedStops = {};
