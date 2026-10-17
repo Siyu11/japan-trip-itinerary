@@ -34,15 +34,12 @@
       <div class="days">
         <article class="day-panel prep-panel" id="day-prep" role="tabpanel" aria-labelledby="tab-prep" hidden>
           <div class="day-heading"><p>BEFORE DEPARTURE</p><h3>Travel To-Do</h3><span>Check each item before the trip. Your progress is saved automatically.</span></div>
-          <div class="prep-checklist" aria-label="Travel preparation to-do list">
-            <div class="prep-item"><strong>Passport</strong><input type="checkbox" data-prep="passport" aria-label="Mark Passport complete"></div>
-            <div class="prep-item"><strong>SIM Card</strong><input type="checkbox" data-prep="sim-card" aria-label="Mark SIM Card complete"></div>
-            <div class="prep-item"><strong>Suica Card</strong><input type="checkbox" data-prep="suica-card" aria-label="Mark Suica Card complete"></div>
-            <div class="prep-item"><div><strong>Visit Japan Web</strong><a href="https://www.vjw.digital.go.jp/" target="_blank" rel="noreferrer">Entry Form ↗</a></div><input type="checkbox" data-prep="visit-japan-web" aria-label="Mark Visit Japan Web complete"></div>
-            <div class="prep-item"><strong>Visa</strong><input type="checkbox" data-prep="visa" aria-label="Mark Visa complete"></div>
-            <div class="prep-item"><strong>Travel Insurance</strong><input type="checkbox" data-prep="travel-insurance" aria-label="Mark Travel Insurance complete"></div>
-            <div class="prep-item"><strong>Medicine</strong><input type="checkbox" data-prep="medicine" aria-label="Mark Medicine complete"></div>
-          </div>
+          <form class="prep-add-form" id="prep-add-form">
+            <label class="sr-only" for="prep-new-item">New to-do item</label>
+            <input id="prep-new-item" type="text" maxlength="80" placeholder="Add a new to-do…" autocomplete="off" required>
+            <button type="submit">Add</button>
+          </form>
+          <div class="prep-checklist" id="prep-checklist" aria-label="Travel preparation to-do list"></div>
         </article>
         <article class="day-panel active" id="day-1" role="tabpanel" aria-labelledby="tab-1">
           <div class="day-heading"><p>第 1 天 · 周五</p><h3>抵达大阪</h3><span>关西机场 → 本町 → 心斋桥 / 道顿堀</span></div>
