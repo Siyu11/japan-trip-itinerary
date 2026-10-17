@@ -8,6 +8,7 @@ const appShell = document.querySelector('#app-shell');
 const authForm = document.querySelector('#auth-form');
 const authEmail = document.querySelector('#auth-email');
 const authPassword = document.querySelector('#auth-password');
+const passwordToggle = document.querySelector('#password-toggle');
 const authModeButton = document.querySelector('#auth-mode');
 const authMessage = document.querySelector('#auth-message');
 const accountButton = document.querySelector('#account-button');
@@ -24,6 +25,14 @@ let currentUser = null;
 let currentProfile = null;
 let appLoaded = false;
 let saveTimer;
+
+passwordToggle.addEventListener('click', () => {
+  const showing = authPassword.type === 'text';
+  authPassword.type = showing ? 'password' : 'text';
+  passwordToggle.setAttribute('aria-pressed', String(!showing));
+  passwordToggle.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  authPassword.focus();
+});
 
 const stateKeys = ['japan-2026-selected-day', 'japan-2026-preparation-checklist', 'japan-2026-preparation-items', 'japan-2026-visited-stops'];
 
