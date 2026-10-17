@@ -11,6 +11,12 @@
 .auth-card form, .profile-card { display: grid; gap: 16px; }
 .auth-card label, .profile-card label { display: grid; gap: 7px; color: #4b5563; font-size: 12px; font-weight: 600; }
 .auth-card input, .profile-card input, .profile-card select { width: 100%; height: 48px; box-sizing: border-box; padding: 0 14px; border: 1px solid #d8dde5; border-radius: 12px; background: #fff; color: #111827; font: inherit; }
+.password-field { position: relative; display: block; }
+.password-field input { padding-right: 48px; }
+.password-toggle { position: absolute; top: 50%; right: 7px; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 9px; background: transparent; color: #718096; cursor: pointer; }
+.password-toggle:hover { background: #f0f2f5; color: #22324a; }
+.password-toggle svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.password-toggle[aria-pressed="true"]::after { content: ""; position: absolute; width: 22px; height: 1.5px; border-radius: 2px; background: currentColor; transform: rotate(-45deg); }
 .auth-card input:focus, .profile-card input:focus, .profile-card select:focus { outline: none; border-color: #66758c; box-shadow: 0 0 0 3px rgba(34,50,74,.09); }
 .auth-submit, .save-profile { height: 48px; border: 0; border-radius: 12px; background: #172033; color: #fff; font-weight: 650; cursor: pointer; }
 .auth-mode { width: 100%; margin-top: 14px; border: 0; background: none; color: #52627a; font-size: 13px; cursor: pointer; }
