@@ -1,6 +1,7 @@
 const tabs = [...document.querySelectorAll('.date-tab')];
 const panels = [...document.querySelectorAll('.day-panel')];
 const selectedDayStorageKey = 'japan-2026-selected-day';
+const notifyCloudStateChanged = () => window.dispatchEvent(new Event('travel-state-changed'));
 
 function activateDay(tab) {
   tabs.forEach((item) => {
@@ -16,6 +17,7 @@ function activateDay(tab) {
   });
   try {
     localStorage.setItem(selectedDayStorageKey, tab.dataset.day);
+    notifyCloudStateChanged();
   } catch {
     // Date switching still works when browser storage is unavailable.
   }
@@ -77,6 +79,7 @@ function savePrepData() {
   try {
     localStorage.setItem(prepStorageKey, JSON.stringify(prepState));
     localStorage.setItem(prepItemsStorageKey, JSON.stringify(prepItems));
+    notifyCloudStateChanged();
   } catch {
     // Checklist interaction still works when browser storage is unavailable.
   }
@@ -186,6 +189,7 @@ document.querySelectorAll('.day-panel').forEach((day) => {
       updateVisitedState(visited);
       try {
         localStorage.setItem(visitedStorageKey, JSON.stringify(visitedStops));
+        notifyCloudStateChanged();
       } catch {
         // The visual state still works when browser storage is unavailable.
       }
