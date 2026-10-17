@@ -94,27 +94,40 @@ function loadItineraryApp() {
   document.body.appendChild(script);
 }
 
+function setProfileFields() {
+  profileName.value = currentProfile?.display_name || '';
+  profileLocale.value = currentProfile?.locale || 'zh-CN';
+  profileCurrency.value = currentProfile?.home_currency || 'CNY';
+}
+
+function withTimeout(promise, milliseconds, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timed out`)), milliseconds))
+  ]);
+}
+
 async function openApp(session) {
   currentUser = session.user;
-  try {
-    currentProfile = await ensureProfile(currentUser);
-    if (currentProfile.preferences?.app_state) restoreAppState(currentProfile.preferences.app_state);
-    await ensureDefaultTrip(currentUser);
-  } catch (error) {
-    console.error('Cloud profile initialization failed:', error);
-    currentProfile = {
-      display_name: currentUser.email?.split('@')[0] || 'Traveler',
-      locale: 'zh-CN',
-      home_currency: 'CNY',
-      preferences: {}
-    };
-  }
-  profileName.value = currentProfile.display_name || '';
-  profileLocale.value = currentProfile.locale || 'zh-CN';
-  profileCurrency.value = currentProfile.home_currency || 'CNY';
+  currentProfile = {
+    display_name: currentUser.email?.split('@')[0] || 'Traveler',
+    locale: 'zh-CN',
+    home_currency: 'CNY',
+    preferences: {}
+  };
+  setProfileFields();
   authScreen.hidden = true;
   appShell.hidden = false;
   document.body.classList.remove('auth-pending');
+
+  try {
+    currentProfile = await withTimeout(ensureProfile(currentUser), 3500, 'Profile loading');
+    if (currentProfile.preferences?.app_state) restoreAppState(currentProfile.preferences.app_state);
+    setProfileFields();
+    await withTimeout(ensureDefaultTrip(currentUser), 3500, 'Trip loading');
+  } catch (error) {
+    console.error('Cloud profile initialization failed:', error);
+  }
   loadItineraryApp();
 }
 
