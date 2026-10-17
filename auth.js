@@ -60,7 +60,8 @@ window.addEventListener('travel-state-changed', () => {
 });
 
 async function ensureProfile(user) {
-  const { data } = await cloud.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  const { data, error: readError } = await cloud.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  if (readError) throw readError;
   if (data) return data;
   const { data: created, error } = await cloud.from('profiles').insert({
     id: user.id,
@@ -72,15 +73,17 @@ async function ensureProfile(user) {
 }
 
 async function ensureDefaultTrip(user) {
-  const { data } = await cloud.from('trips').select('id').eq('user_id', user.id).eq('is_default', true).maybeSingle();
+  const { data, error: readError } = await cloud.from('trips').select('id').eq('user_id', user.id).eq('is_default', true).maybeSingle();
+  if (readError) throw readError;
   if (data) return;
-  await cloud.from('trips').insert({
+  const { error } = await cloud.from('trips').insert({
     user_id: user.id,
     title: 'Nine Days in Japan',
     summary: 'Osaka itinerary in progress; Kawaguchiko, Mount Fuji and Tokyo to be added.',
     status: 'planning', total_days: 9, is_default: true,
     settings: { dates_tentative: true }
   });
+  if (error) throw error;
 }
 
 function loadItineraryApp() {
@@ -93,9 +96,19 @@ function loadItineraryApp() {
 
 async function openApp(session) {
   currentUser = session.user;
-  currentProfile = await ensureProfile(currentUser);
-  if (currentProfile.preferences?.app_state) restoreAppState(currentProfile.preferences.app_state);
-  await ensureDefaultTrip(currentUser);
+  try {
+    currentProfile = await ensureProfile(currentUser);
+    if (currentProfile.preferences?.app_state) restoreAppState(currentProfile.preferences.app_state);
+    await ensureDefaultTrip(currentUser);
+  } catch (error) {
+    console.error('Cloud profile initialization failed:', error);
+    currentProfile = {
+      display_name: currentUser.email?.split('@')[0] || 'Traveler',
+      locale: 'zh-CN',
+      home_currency: 'CNY',
+      preferences: {}
+    };
+  }
   profileName.value = currentProfile.display_name || '';
   profileLocale.value = currentProfile.locale || 'zh-CN';
   profileCurrency.value = currentProfile.home_currency || 'CNY';
@@ -124,13 +137,18 @@ authModeButton.addEventListener('click', () => {
 authForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   authMessage.textContent = 'Please wait…';
-  const credentials = { email: authEmail.value.trim(), password: authPassword.value };
-  const result = authMode === 'signin'
-    ? await cloud.auth.signInWithPassword(credentials)
-    : await cloud.auth.signUp({ ...credentials, options: { emailRedirectTo: `${location.origin}${location.pathname}` } });
-  if (result.error) authMessage.textContent = result.error.message;
-  else if (authMode === 'signup' && !result.data.session) authMessage.textContent = 'Check your email to confirm your account, then return here to sign in.';
-  else if (result.data.session) await openApp(result.data.session);
+  try {
+    const credentials = { email: authEmail.value.trim(), password: authPassword.value };
+    const result = authMode === 'signin'
+      ? await cloud.auth.signInWithPassword(credentials)
+      : await cloud.auth.signUp({ ...credentials, options: { emailRedirectTo: `${location.origin}${location.pathname}` } });
+    if (result.error) authMessage.textContent = result.error.message;
+    else if (authMode === 'signup' && !result.data.session) authMessage.textContent = 'Check your email to confirm your account, then return here to sign in.';
+    else if (result.data.session) await openApp(result.data.session);
+  } catch (error) {
+    console.error('Sign-in failed:', error);
+    authMessage.textContent = error?.message || 'Unable to finish signing in. Please try again.';
+  }
 });
 
 accountButton.addEventListener('click', () => profileDialog.showModal());
@@ -151,7 +169,13 @@ cloud.auth.onAuthStateChange((_event, session) => {
 });
 
 (async () => {
-  const { data } = await cloud.auth.getSession();
-  if (data.session) await openApp(data.session);
-  else openAuth();
+  try {
+    const { data } = await cloud.auth.getSession();
+    if (data.session) await openApp(data.session);
+    else openAuth();
+  } catch (error) {
+    console.error('Session restore failed:', error);
+    openAuth();
+    authMessage.textContent = 'Unable to restore your session. Please sign in again.';
+  }
 })();
