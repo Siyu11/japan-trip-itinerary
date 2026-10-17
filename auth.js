@@ -118,6 +118,7 @@ async function openApp(session) {
   setProfileFields();
   authScreen.hidden = true;
   appShell.hidden = false;
+  authMessage.textContent = '';
   document.body.classList.remove('auth-pending');
 
   try {
