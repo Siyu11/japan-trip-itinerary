@@ -7,12 +7,30 @@
   <meta name="description" content="九天日本旅行的暂定计划，目前整理大阪行程。">
   <title>九天日本旅行 · 暂定行程</title>
   <link rel="stylesheet" href="styles.css?v=20261017-2">
-  <link rel="stylesheet" href="mobile.css?v=20261017-2">
+  <link rel="stylesheet" href="mobile.css?v=20261017-3">
+  <link rel="stylesheet" href="account.css?v=20261017-1">
 </head>
-<body>
+<body class="auth-pending">
+  <section class="auth-screen" id="auth-screen" aria-labelledby="auth-title">
+    <div class="auth-brand"><span>TRAVEL PLANNER</span><strong>Your trips.<br>Your way.</strong><p>Plan every journey in one quiet, personal space.</p></div>
+    <div class="auth-card">
+      <p class="auth-eyebrow">WELCOME</p>
+      <h1 id="auth-title">Sign in</h1>
+      <p class="auth-intro">Your plans and preferences will stay in sync across devices.</p>
+      <form id="auth-form">
+        <label>Email<input id="auth-email" type="email" autocomplete="email" required></label>
+        <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" required></label>
+        <button class="auth-submit" id="auth-submit" type="submit">Continue</button>
+      </form>
+      <button class="auth-mode" id="auth-mode" type="button">Create an account</button>
+      <p class="auth-message" id="auth-message" role="status"></p>
+    </div>
+  </section>
+
+  <div id="app-shell" hidden>
   <header class="site-header">
     <a class="wordmark" href="#top">日本旅行</a>
-    <button class="print-button" id="print-button" type="button" aria-label="打印或保存为 PDF">打印</button>
+    <div class="header-actions"><button class="account-button" id="account-button" type="button" aria-label="Open profile settings">Account</button><button class="print-button" id="print-button" type="button" aria-label="打印或保存为 PDF">打印</button></div>
   </header>
 
   <main id="top">
@@ -77,6 +95,21 @@
 
   </main>
   <footer><span>九天日本旅行 · 大阪行程草案</span><span>日期暂定</span></footer>
-  <script src="script.js?v=20261017-2"></script>
+  </div>
+
+  <dialog class="profile-dialog" id="profile-dialog">
+    <form method="dialog" class="profile-card" id="profile-form">
+      <div class="profile-heading"><div><p>PERSONAL SETTINGS</p><h2>Your profile</h2></div><button class="profile-close" id="profile-close" type="button" aria-label="Close">×</button></div>
+      <label>Display name<input id="profile-name" type="text" maxlength="60"></label>
+      <label>Language<select id="profile-locale"><option value="zh-CN">中文</option><option value="en">English</option></select></label>
+      <label>Home currency<select id="profile-currency"><option value="CNY">CNY · ¥</option><option value="JPY">JPY · ¥</option><option value="USD">USD · $</option></select></label>
+      <div class="profile-actions"><button class="signout-button" id="signout-button" value="none" type="button">Sign out</button><button class="save-profile" id="save-profile" value="none" type="submit">Save</button></div>
+      <p class="profile-message" id="profile-message" role="status"></p>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=20261017-1"></script>
+  <script src="auth.js?v=20261017-1"></script>
 </body>
 </html>
