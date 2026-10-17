@@ -8,7 +8,7 @@
   <title>九天日本旅行 · 暂定行程</title>
   <link rel="stylesheet" href="styles.css?v=20261017-2">
   <link rel="stylesheet" href="mobile.css?v=20261017-3">
-  <link rel="stylesheet" href="account.css?v=20261017-1">
+  <link rel="stylesheet" href="account.css?v=20261017-2">
 </head>
 <body class="auth-pending">
   <section class="auth-screen" id="auth-screen" aria-labelledby="auth-title">
@@ -19,7 +19,7 @@
       <p class="auth-intro">Your plans and preferences will stay in sync across devices.</p>
       <form id="auth-form">
         <label>Email<input id="auth-email" type="email" autocomplete="email" required></label>
-        <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" required></label>
+        <label>Password<span class="password-field"><input id="auth-password" type="password" autocomplete="current-password" minlength="8" required><button class="password-toggle" id="password-toggle" type="button" aria-label="Show password" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.7"/></svg></button></span></label>
         <button class="auth-submit" id="auth-submit" type="submit">Continue</button>
       </form>
       <button class="auth-mode" id="auth-mode" type="button">Create an account</button>
@@ -110,6 +110,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20261017-1"></script>
-  <script src="auth.js?v=20261017-1"></script>
+  <script src="auth.js?v=20261017-2"></script>
 </body>
 </html>
