@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="九天日本旅行的暂定计划，目前整理大阪行程。">
+  <title>九天日本旅行 · 暂定行程</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="#top">日本旅行</a>
+    <button class="print-button" id="print-button" type="button" aria-label="打印或保存为 PDF">打印</button>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <p class="kicker">Japan · Nine Days</p>
+      <h1>Nine Days<br><span>in Japan.</span></h1>
+      <div class="date-state"><span class="state-dot"></span><div><small>大阪段暂定</small><strong>2026 年 11 月 6–9 日</strong></div></div>
+    </section>
+
+    <section class="planner" id="itinerary">
+      <div class="section-title"><p class="kicker">Itinerary</p><h2>暂定行程</h2></div>
+      <div class="date-nav" role="tablist" aria-label="选择行程日">
+        <button class="date-tab prep-tab" role="tab" aria-selected="false" aria-controls="day-prep" id="tab-prep" data-day="day-prep"><small>TO-DO</small><strong>Before Trip</strong><span>CHECKLIST</span></button>
+        <button class="date-tab active" role="tab" aria-selected="true" aria-controls="day-1" id="tab-1" data-day="day-1"><small>第 1 天</small><strong>11月6日</strong><span>暂定</span></button>
+        <button class="date-tab" role="tab" aria-selected="false" aria-controls="day-2" id="tab-2" data-day="day-2"><small>第 2 天</small><strong>11月7日</strong><span>暂定</span></button>
+        <button class="date-tab" role="tab" aria-selected="false" aria-controls="day-3" id="tab-3" data-day="day-3"><small>第 3 天</small><strong>11月8日</strong><span>暂定</span></button>
+        <button class="date-tab" role="tab" aria-selected="false" aria-controls="day-4" id="tab-4" data-day="day-4"><small>第 4 天</small><strong>11月9日</strong><span>暂定</span></button>
+      </div>
+      <div class="days">
+        <article class="day-panel prep-panel" id="day-prep" role="tabpanel" aria-labelledby="tab-prep" hidden>
+          <div class="day-heading"><p>BEFORE DEPARTURE</p><h3>Travel To-Do</h3><span>Check each item before the trip. Your progress is saved automatically.</span></div>
+          <div class="prep-checklist" aria-label="Travel preparation to-do list">
+            <div class="prep-item"><strong>Passport</strong><input type="checkbox" data-prep="passport" aria-label="Mark Passport complete"></div>
+            <div class="prep-item"><strong>SIM Card</strong><input type="checkbox" data-prep="sim-card" aria-label="Mark SIM Card complete"></div>
+            <div class="prep-item"><strong>Suica Card</strong><input type="checkbox" data-prep="suica-card" aria-label="Mark Suica Card complete"></div>
+            <div class="prep-item"><div><strong>Visit Japan Web</strong><a href="https://www.vjw.digital.go.jp/" target="_blank" rel="noreferrer">Entry Form ↗</a></div><input type="checkbox" data-prep="visit-japan-web" aria-label="Mark Visit Japan Web complete"></div>
+            <div class="prep-item"><strong>Visa</strong><input type="checkbox" data-prep="visa" aria-label="Mark Visa complete"></div>
+            <div class="prep-item"><strong>Travel Insurance</strong><input type="checkbox" data-prep="travel-insurance" aria-label="Mark Travel Insurance complete"></div>
+            <div class="prep-item"><strong>Medicine</strong><input type="checkbox" data-prep="medicine" aria-label="Mark Medicine complete"></div>
+          </div>
+        </article>
+        <article class="day-panel active" id="day-1" role="tabpanel" aria-labelledby="tab-1">
+          <div class="day-heading"><p>第 1 天 · 周五</p><h3>抵达大阪</h3><span>关西机场 → 本町 → 心斋桥 / 道顿堀</span></div>
+          <div class="schedule">
+            <div class="event"><time>下午</time><div><h4>抵达关西国际机场</h4><p>入境、领取行李后前往大阪市区。具体航班与交通方式待补充。</p><span class="tag">时间待确认</span><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Kansai+International+Airport" target="_blank" rel="noreferrer">Google 地图</a></div></div>
+            <div class="event"><time>傍晚</time><div><h4>候选酒店入住</h4><p>Moxy Osaka Honmachi，目前为住宿候选。</p><span class="tag important">未预订</span><div class="actions"><a href="https://www.marriott.com/en-us/hotels/osamo-moxy-osaka-honmachi/overview/" target="_blank" rel="noreferrer">查看官网</a><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Moxy+Osaka+Honmachi" target="_blank" rel="noreferrer">Google 地图</a></div></div></div>
+            <div class="event"><time>晚上</time><div><h4>心斋桥</h4><p>沿心斋桥筋商店街散步，逛店并寻找晚餐。</p><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Shinsaibashi+Osaka" target="_blank" rel="noreferrer">Google 地图</a></div></div>
+            <div class="event"><time>晚些时候</time><div><h4>道顿堀</h4><p>继续前往道顿堀，欣赏河畔霓虹与格力高跑者招牌。</p><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Dotonbori+Osaka" target="_blank" rel="noreferrer">Google 地图</a></div></div>
+          </div>
+        </article>
+        <article class="day-panel" id="day-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+          <div class="day-heading"><p>第 2 天 · 周六</p><h3>大阪城市漫游</h3><span>黑门市场 → 大阪城 → 梅田 → 空中庭园</span></div>
+          <div class="schedule">
+            <div class="event"><time>上午</time><div><h4>黑门市场</h4><p>从市场早餐开始，逛海鲜、果物与关西小吃摊。</p><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Kuromon+Ichiba+Market+Osaka" target="_blank" rel="noreferrer">Google 地图</a></div></div>
+            <div class="event"><time>中午后</time><div><h4>大阪城公园与天守阁</h4><p>先漫步公园，再进入天守阁参观。门票与具体入场时间待确认。</p><span class="tag">门票待确认</span><div class="actions"><a href="https://osaka-castle.jp/" target="_blank" rel="noreferrer">查看官网</a><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Osaka+Castle" target="_blank" rel="noreferrer">Google 地图</a></div></div></div>
+            <div class="event"><time>下午</time><div><h4>梅田</h4><p>游览 LUCUA Osaka、Grand Front Osaka 与 Grand Green Osaka，预留购物和咖啡时间。</p><div class="actions"><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=LUCUA+Osaka" target="_blank" rel="noreferrer">LUCUA</a><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Grand+Front+Osaka" target="_blank" rel="noreferrer">Grand Front</a><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Grand+Green+Osaka" target="_blank" rel="noreferrer">Grand Green</a></div></div></div>
+            <div class="event"><time>晚上</time><div><h4>梅田蓝天大厦</h4><p>登上空中庭园展望台，看大阪夜景。是否提前购票待确认。</p><span class="tag">购票待确认</span><div class="actions"><a href="https://www.skybldg.co.jp/observatory/" target="_blank" rel="noreferrer">查看官网</a><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Umeda+Sky+Building" target="_blank" rel="noreferrer">Google 地图</a></div></div></div>
+          </div>
+        </article>
+        <article class="day-panel" id="day-3" role="tabpanel" aria-labelledby="tab-3" hidden>
+          <div class="day-heading"><p>第 3 天 · 周日</p><h3>奈良一日</h3><span>大阪 → 奈良公园 → 东大寺 → 本町</span></div>
+          <div class="schedule">
+            <div class="event"><time>上午</time><div><h4>奈良公园</h4><p>从大阪出发，抵达后在奈良公园散步。车次和出发站待补充。</p><span class="tag">交通待确认</span><div class="actions"><a href="https://www3.pref.nara.jp/park/" target="_blank" rel="noreferrer">查看官网</a><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Nara+Park" target="_blank" rel="noreferrer">Google 地图</a></div></div></div>
+            <div class="event"><time>中午后</time><div><h4>东大寺</h4><p>参观大佛殿与寺院区域，午餐地点随当日动线决定。</p><div class="actions"><a href="https://www.todaiji.or.jp/" target="_blank" rel="noreferrer">查看官网</a><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Todaiji+Temple+Nara" target="_blank" rel="noreferrer">Google 地图</a></div></div></div>
+            <div class="event"><time>傍晚</time><div><h4>返回大阪与晚餐</h4><p>留出返程、回酒店休息与晚餐时间。</p></div></div>
+            <div class="event focus"><time>约 19:00</time><div><h4>TSUBOMIYA 本町店</h4><p>全身按摩 60–90 分钟；60 分钟参考价 ¥6,600 / 人。</p><ul><li>确认男技师服务用户</li><li>确认女技师服务朋友</li><li>确认两人能否同时开始</li></ul><span class="tag important">暂定 · 未预约</span><div class="actions"><a href="https://tsubomi-33.com/" target="_blank" rel="noreferrer">查看官网</a><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=TSUBOMIYA+Honmachi+Osaka" target="_blank" rel="noreferrer">Google 地图</a></div></div></div>
+          </div>
+        </article>
+        <article class="day-panel" id="day-4" role="tabpanel" aria-labelledby="tab-4" hidden>
+          <div class="day-heading"><p>第 4 天 · 周一</p><h3>Universal Studios Japan</h3><span>全天游玩</span></div>
+          <div class="schedule"><div class="event focus"><time>全天</time><div><h4>USJ</h4><p>门票、入园时间、重点项目顺序与 Express Pass 均待确认。</p><ul><li>决定是否购买 Express Pass</li><li>确定优先项目与园区</li><li>临近出发时确认营业时间</li></ul><span class="tag important">Express Pass 未定</span><div class="actions"><a href="https://www.usj.co.jp/web/ja/jp" target="_blank" rel="noreferrer">查看官网</a><a class="map-button" href="https://www.google.com/maps/search/?api=1&query=Universal+Studios+Japan" target="_blank" rel="noreferrer">Google 地图</a></div></div></div></div>
+        </article>
+      </div>
+    </section>
+
+  </main>
+  <footer><span>九天日本旅行 · 大阪行程草案</span><span>日期暂定</span></footer>
+  <script src="script.js"></script>
+</body>
+</html>
