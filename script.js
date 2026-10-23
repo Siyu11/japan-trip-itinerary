@@ -198,3 +198,239 @@ document.querySelectorAll('.day-panel').forEach((day) => {
     content.appendChild(button);
   });
 });
+
+const routeModeStorageKey = 'japan-2026-route-modes';
+const geocodeStorageKey = 'japan-2026-geocode-cache';
+let routeModes = {};
+let geocodeCache = {};
+
+try {
+  routeModes = JSON.parse(localStorage.getItem(routeModeStorageKey) || '{}');
+  geocodeCache = JSON.parse(localStorage.getItem(geocodeStorageKey) || '{}');
+} catch {
+  routeModes = {};
+  geocodeCache = {};
+}
+
+const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+function readMapQuery(link) {
+  try {
+    const url = new URL(link.href);
+    return url.searchParams.get('query') || url.searchParams.get('q') || '';
+  } catch {
+    return '';
+  }
+}
+
+function getDayStops(day) {
+  const stops = [];
+  day.querySelectorAll('.schedule .event').forEach((event) => {
+    const links = [...event.querySelectorAll('a.map-button')];
+    const time = event.querySelector('time')?.textContent.trim() || '';
+    const eventTitle = event.querySelector('h4')?.textContent.trim() || '未命名地点';
+    const note = event.querySelector('p')?.textContent.trim() || '';
+    links.forEach((link, linkIndex) => {
+      const query = readMapQuery(link);
+      if (!query) return;
+      const rawLabel = link.textContent.trim();
+      const title = links.length === 1 || !rawLabel || rawLabel === 'Google 地图'
+        ? eventTitle
+        : rawLabel;
+      stops.push({ title, time, note, query, mapUrl: link.href, event, linkIndex });
+    });
+  });
+  return stops;
+}
+
+function googleDirectionsUrl(stops, travelMode) {
+  if (!stops.length) return '#';
+  if (stops.length === 1) return stops[0].mapUrl;
+  const params = new URLSearchParams({
+    api: '1',
+    origin: stops[0].query,
+    destination: stops[stops.length - 1].query
+  });
+  if (stops.length > 2) params.set('waypoints', stops.slice(1, -1).map((stop) => stop.query).join('|'));
+  if (travelMode) params.set('travelmode', travelMode);
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
+async function geocodeStop(stop) {
+  const cacheKey = stop.query.toLowerCase();
+  if (geocodeCache[cacheKey]) return geocodeCache[cacheKey];
+  const params = new URLSearchParams({ q: stop.query, format: 'jsonv2', limit: '1', 'accept-language': 'zh-CN' });
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, { headers: { Accept: 'application/json' } });
+  if (!response.ok) throw new Error('Location lookup failed');
+  const [match] = await response.json();
+  if (!match) return null;
+  const result = { lat: Number(match.lat), lon: Number(match.lon) };
+  geocodeCache[cacheKey] = result;
+  try { localStorage.setItem(geocodeStorageKey, JSON.stringify(geocodeCache)); } catch {}
+  return result;
+}
+
+function modeLabel(mode) {
+  return { walking: '步行', driving: '驾车', transit: '公共交通' }[mode] || '方式待定';
+}
+
+function makeRouteModule(day) {
+  if (day.classList.contains('prep-panel')) return;
+  const schedule = day.querySelector('.schedule');
+  if (!schedule) return;
+
+  const details = document.createElement('details');
+  details.className = 'route-module';
+  details.innerHTML = `
+    <summary><span><small>ROUTE</small><strong>路线地图</strong></span><span class="route-toggle" aria-hidden="true"></span></summary>
+    <div class="route-content">
+      <div class="route-map" role="region" aria-label="当天路线地图"></div>
+      <p class="route-map-note">地图连线仅表示游览顺序，不代表实际道路、距离或所需时间。</p>
+      <div class="route-status" role="status">展开后载入当天地点…</div>
+      <ol class="route-stop-list"></ol>
+      <div class="route-actions"><a class="route-start" target="_blank" rel="noreferrer">开始导航</a></div>
+    </div>`;
+  schedule.before(details);
+
+  let map;
+  let layerGroup;
+  let lastSignature = '';
+
+  const render = async () => {
+    const stops = getDayStops(day);
+    const signature = stops.map((stop) => `${stop.query}:${stop.title}`).join('|');
+    const list = details.querySelector('.route-stop-list');
+    const status = details.querySelector('.route-status');
+    const start = details.querySelector('.route-start');
+    list.replaceChildren();
+
+    if (!stops.length) {
+      status.textContent = '当天尚无可定位地点。请为行程添加准确的 Google Maps 地点链接。';
+      start.hidden = true;
+      return;
+    }
+
+    stops.forEach((stop, index) => {
+      const item = document.createElement('li');
+      const segmentKey = `${day.id}:${index}`;
+      item.innerHTML = `<span class="route-number">${index + 1}</span><div><strong></strong><small></small></div>`;
+      item.querySelector('strong').textContent = stop.title;
+      item.querySelector('small').textContent = [stop.time, stop.note].filter(Boolean).join(' · ');
+      const controls = document.createElement('div');
+      controls.className = 'route-stop-controls';
+      const placeLink = document.createElement('a');
+      placeLink.href = stop.mapUrl;
+      placeLink.target = '_blank';
+      placeLink.rel = 'noreferrer';
+      placeLink.textContent = '地图';
+      placeLink.setAttribute('aria-label', `在 Google Maps 打开${stop.title}`);
+      controls.appendChild(placeLink);
+
+      if (index < stops.length - 1) {
+        const select = document.createElement('select');
+        select.setAttribute('aria-label', `${stop.title}至${stops[index + 1].title}的交通方式`);
+        select.innerHTML = '<option value="">方式待定</option><option value="walking">步行</option><option value="transit">公共交通</option><option value="driving">驾车</option>';
+        select.value = routeModes[segmentKey] || '';
+        const segmentLink = document.createElement('a');
+        segmentLink.target = '_blank';
+        segmentLink.rel = 'noreferrer';
+        segmentLink.className = 'segment-nav';
+        const updateSegment = () => {
+          const mode = select.value;
+          segmentLink.href = googleDirectionsUrl(stops.slice(index, index + 2), mode);
+          segmentLink.textContent = `导航至 ${index + 2}`;
+          segmentLink.title = `${modeLabel(mode)}：${stop.title} → ${stops[index + 1].title}`;
+        };
+        updateSegment();
+        select.addEventListener('change', () => {
+          routeModes[segmentKey] = select.value;
+          try {
+            localStorage.setItem(routeModeStorageKey, JSON.stringify(routeModes));
+            notifyCloudStateChanged();
+          } catch {}
+          updateSegment();
+          updateStartLink();
+        });
+        controls.append(select, segmentLink);
+      }
+      item.appendChild(controls);
+      list.appendChild(item);
+    });
+
+    function updateStartLink() {
+      const modes = stops.slice(0, -1).map((_, index) => routeModes[`${day.id}:${index}`] || '');
+      const selectedModes = [...new Set(modes.filter(Boolean))];
+      const mixed = selectedModes.length > 1;
+      start.href = mixed ? googleDirectionsUrl(stops.slice(0, 2), modes[0]) : googleDirectionsUrl(stops, selectedModes[0] || '');
+      start.textContent = mixed ? '开始分段导航' : '开始导航';
+      start.title = mixed ? '各路段交通方式不同，请按列表逐段导航' : '按当天地点顺序在 Google Maps 中打开';
+      start.hidden = false;
+    }
+    updateStartLink();
+
+    if (!details.open || signature === lastSignature) return;
+    lastSignature = signature;
+    status.textContent = '正在定位当天地点…';
+    if (!window.L) {
+      status.textContent = '地图组件载入失败，请刷新页面；仍可使用下方 Google Maps 导航。';
+      return;
+    }
+    if (!map) {
+      map = L.map(details.querySelector('.route-map'), { scrollWheelZoom: false, zoomControl: true });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      layerGroup = L.layerGroup().addTo(map);
+    }
+    layerGroup.clearLayers();
+    const located = [];
+    const missing = [];
+    for (let index = 0; index < stops.length; index += 1) {
+      try {
+        const coordinates = await geocodeStop(stops[index]);
+        if (coordinates) located.push({ ...stops[index], ...coordinates, index });
+        else missing.push(stops[index].title);
+      } catch {
+        missing.push(stops[index].title);
+      }
+      if (index < stops.length - 1 && !geocodeCache[stops[index + 1].query.toLowerCase()]) await sleep(1050);
+    }
+    located.forEach((stop) => {
+      const icon = L.divIcon({ className: 'route-marker-shell', html: `<span>${stop.index + 1}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] });
+      const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(layerGroup);
+      const popup = document.createElement('div');
+      popup.className = 'route-popup';
+      const title = document.createElement('strong');
+      title.textContent = `${stop.index + 1}. ${stop.title}`;
+      const meta = document.createElement('span');
+      meta.textContent = [stop.time, stop.note].filter(Boolean).join(' · ');
+      const link = document.createElement('a');
+      link.href = stop.mapUrl;
+      link.target = '_blank';
+      link.rel = 'noreferrer';
+      link.textContent = '在 Google Maps 打开';
+      popup.append(title, meta, link);
+      marker.bindPopup(popup);
+    });
+    if (located.length > 1) {
+      L.polyline(located.map((stop) => [stop.lat, stop.lon]), { color: '#22324a', weight: 2, opacity: .55, dashArray: '6 8' }).addTo(layerGroup);
+    }
+    if (located.length) {
+      map.fitBounds(L.latLngBounds(located.map((stop) => [stop.lat, stop.lon])), { padding: [28, 28], maxZoom: 14 });
+      setTimeout(() => map.invalidateSize(), 50);
+    }
+    status.textContent = missing.length
+      ? `以下地点无法准确定位，请补充或确认地点链接：${missing.join('、')}`
+      : `已按当天行程顺序显示 ${located.length} 个地点。`;
+  };
+
+  details.addEventListener('toggle', render);
+  const observer = new MutationObserver(() => {
+    lastSignature = '';
+    if (details.open) render();
+  });
+  observer.observe(schedule, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href'] });
+}
+
+document.querySelectorAll('.day-panel').forEach(makeRouteModule);
