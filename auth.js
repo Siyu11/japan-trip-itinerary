@@ -34,7 +34,7 @@ passwordToggle.addEventListener('click', () => {
   authPassword.focus();
 });
 
-const stateKeys = ['japan-2026-selected-day', 'japan-2026-preparation-checklist', 'japan-2026-preparation-items', 'japan-2026-visited-stops'];
+const stateKeys = ['japan-2026-selected-day', 'japan-2026-preparation-checklist', 'japan-2026-preparation-items', 'japan-2026-visited-stops', 'japan-2026-route-modes'];
 
 function collectAppState() {
   return Object.fromEntries(stateKeys.map((key) => [key, localStorage.getItem(key)]));
@@ -90,7 +90,7 @@ function loadItineraryApp() {
   if (appLoaded) return;
   appLoaded = true;
   const script = document.createElement('script');
-  script.src = 'script.js?v=20261017-3';
+  script.src = 'script.js?v=20261023-1';
   document.body.appendChild(script);
 }
 
