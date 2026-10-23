@@ -200,19 +200,13 @@ document.querySelectorAll('.day-panel').forEach((day) => {
 });
 
 const routeModeStorageKey = 'japan-2026-route-modes';
-const geocodeStorageKey = 'japan-2026-geocode-cache';
 let routeModes = {};
-let geocodeCache = {};
 
 try {
   routeModes = JSON.parse(localStorage.getItem(routeModeStorageKey) || '{}');
-  geocodeCache = JSON.parse(localStorage.getItem(geocodeStorageKey) || '{}');
 } catch {
   routeModes = {};
-  geocodeCache = {};
 }
-
-const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 function readMapQuery(link) {
   try {
@@ -237,13 +231,10 @@ function getDayStops(day) {
       const title = links.length === 1 || !rawLabel || rawLabel === 'Google 地图'
         ? eventTitle
         : rawLabel;
-      const lat = Number(link.dataset.lat);
-      const lon = Number(link.dataset.lng);
       stops.push({
         title, time, note, query, mapUrl: link.href,
         travelMode: link.dataset.travelMode || '',
         routePosition: link.dataset.routePosition || '',
-        coordinates: Number.isFinite(lat) && Number.isFinite(lon) && link.dataset.lat && link.dataset.lng ? { lat, lon } : null,
         event, linkIndex
       });
     });
@@ -265,23 +256,6 @@ function googleDirectionsUrl(stops, travelMode) {
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
-async function geocodeStop(stop) {
-  if (stop.coordinates) return stop.coordinates;
-  const cacheKey = stop.query.toLowerCase();
-  if (geocodeCache[cacheKey]) return geocodeCache[cacheKey];
-  const params = new URLSearchParams({ q: stop.query, limit: '1' });
-  const response = await fetch(`https://photon.komoot.io/api/?${params.toString()}`, { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error('Location lookup failed');
-  const payload = await response.json();
-  const [match] = payload.features || [];
-  if (!match) return null;
-  const [lon, lat] = match.geometry.coordinates;
-  const result = { lat: Number(lat), lon: Number(lon) };
-  geocodeCache[cacheKey] = result;
-  try { localStorage.setItem(geocodeStorageKey, JSON.stringify(geocodeCache)); } catch {}
-  return result;
-}
-
 function modeLabel(mode) {
   return { walking: '步行', driving: '驾车', transit: '公共交通' }[mode] || '方式待定';
 }
@@ -300,31 +274,31 @@ function makeRouteModule(day) {
   details.innerHTML = `
     <summary><span><small>ROUTE</small><strong>路线地图</strong></span><span class="route-toggle" aria-hidden="true"></span></summary>
     <div class="route-content">
-      <div class="route-map" role="region" aria-label="当天路线地图"></div>
-      <p class="route-map-note">地图连线仅表示游览顺序，不代表实际道路、距离或所需时间。</p>
-      <div class="route-status" role="status">展开后载入当天地点…</div>
+      <div class="google-route-card" role="region" aria-label="Google Maps 当天路线">
+        <div><small>GOOGLE MAPS</small><strong>按当天顺序查看路线</strong><span>实际道路、距离和所需时间由 Google Maps 计算。</span></div>
+        <a class="google-route-open" target="_blank" rel="noreferrer">打开路线</a>
+      </div>
+      <div class="route-status" role="status"></div>
       <ol class="route-stop-list"></ol>
-      <div class="route-actions"><a class="route-start" target="_blank" rel="noreferrer">开始导航</a></div>
+      <div class="route-actions"><a class="route-start" target="_blank" rel="noreferrer">在 Google Maps 开始导航</a></div>
     </div>`;
   schedule.before(details);
 
-  let map;
-  let layerGroup;
-  let lastSignature = '';
-
-  const render = async () => {
+  const render = () => {
     const stops = getDayStops(day);
-    const signature = stops.map((stop) => `${stop.query}:${stop.title}:${stop.travelMode}:${stop.routePosition}:${stop.coordinates?.lat || ''}:${stop.coordinates?.lon || ''}`).join('|');
     const list = details.querySelector('.route-stop-list');
     const status = details.querySelector('.route-status');
     const start = details.querySelector('.route-start');
+    const routeOpen = details.querySelector('.google-route-open');
     list.replaceChildren();
 
     if (!stops.length) {
       status.textContent = '当天尚无可定位地点。请为行程添加准确的 Google Maps 地点链接。';
       start.hidden = true;
+      routeOpen.hidden = true;
       return;
     }
+    status.textContent = `共 ${stops.length} 个地点，按行程顺序编号。`;
 
     stops.forEach((stop, index) => {
       const item = document.createElement('li');
@@ -340,7 +314,7 @@ function makeRouteModule(day) {
       placeLink.href = stop.mapUrl;
       placeLink.target = '_blank';
       placeLink.rel = 'noreferrer';
-      placeLink.textContent = '地图';
+      placeLink.textContent = 'Google Maps';
       placeLink.setAttribute('aria-label', `在 Google Maps 打开${stop.title}`);
       controls.appendChild(placeLink);
 
@@ -384,73 +358,20 @@ function makeRouteModule(day) {
       });
       const selectedModes = [...new Set(modes.filter(Boolean))];
       const mixed = selectedModes.length > 1;
-      start.href = mixed ? googleDirectionsUrl(stops.slice(0, 2), modes[0]) : googleDirectionsUrl(stops, selectedModes[0] || '');
-      start.textContent = mixed ? '开始分段导航' : '开始导航';
+      const routeUrl = mixed ? googleDirectionsUrl(stops.slice(0, 2), modes[0]) : googleDirectionsUrl(stops, selectedModes[0] || '');
+      start.href = routeUrl;
+      routeOpen.href = routeUrl;
+      start.textContent = mixed ? '在 Google Maps 开始分段导航' : '在 Google Maps 开始导航';
+      routeOpen.textContent = mixed ? '打开首段路线' : '打开完整路线';
       start.title = mixed ? '各路段交通方式不同，请按列表逐段导航' : '按当天地点顺序在 Google Maps 中打开';
       start.hidden = false;
+      routeOpen.hidden = false;
     }
     updateStartLink();
-
-    if (!details.open || signature === lastSignature) return;
-    lastSignature = signature;
-    status.textContent = '正在定位当天地点…';
-    if (!window.L) {
-      status.textContent = '地图组件载入失败，请刷新页面；仍可使用下方 Google Maps 导航。';
-      return;
-    }
-    if (!map) {
-      map = L.map(details.querySelector('.route-map'), { scrollWheelZoom: false, zoomControl: true });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-      layerGroup = L.layerGroup().addTo(map);
-    }
-    layerGroup.clearLayers();
-    const located = [];
-    const missing = [];
-    for (let index = 0; index < stops.length; index += 1) {
-      try {
-        const coordinates = await geocodeStop(stops[index]);
-        if (coordinates) located.push({ ...stops[index], ...coordinates, index });
-        else missing.push(stops[index].title);
-      } catch {
-        missing.push(stops[index].title);
-      }
-      if (index < stops.length - 1 && !geocodeCache[stops[index + 1].query.toLowerCase()]) await sleep(1050);
-    }
-    located.forEach((stop) => {
-      const icon = L.divIcon({ className: 'route-marker-shell', html: `<span>${stop.index + 1}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] });
-      const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(layerGroup);
-      const popup = document.createElement('div');
-      popup.className = 'route-popup';
-      const title = document.createElement('strong');
-      title.textContent = `${stop.index + 1}. ${stop.title}`;
-      const meta = document.createElement('span');
-      meta.textContent = [stop.time, stop.note].filter(Boolean).join(' · ');
-      const link = document.createElement('a');
-      link.href = stop.mapUrl;
-      link.target = '_blank';
-      link.rel = 'noreferrer';
-      link.textContent = '在 Google Maps 打开';
-      popup.append(title, meta, link);
-      marker.bindPopup(popup);
-    });
-    if (located.length > 1) {
-      L.polyline(located.map((stop) => [stop.lat, stop.lon]), { color: '#22324a', weight: 2, opacity: .55, dashArray: '6 8' }).addTo(layerGroup);
-    }
-    if (located.length) {
-      map.fitBounds(L.latLngBounds(located.map((stop) => [stop.lat, stop.lon])), { padding: [28, 28], maxZoom: 14 });
-      setTimeout(() => map.invalidateSize(), 50);
-    }
-    status.textContent = missing.length
-      ? `以下地点无法准确定位，请补充或确认地点链接：${missing.join('、')}`
-      : `已按当天行程顺序显示 ${located.length} 个地点。`;
   };
 
   details.addEventListener('toggle', render);
   const observer = new MutationObserver(() => {
-    lastSignature = '';
     if (details.open) render();
   });
   observer.observe(schedule, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'data-travel-mode', 'data-route-position', 'data-lat', 'data-lng'] });
