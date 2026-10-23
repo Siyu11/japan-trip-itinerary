@@ -90,7 +90,7 @@ function loadItineraryApp() {
   if (appLoaded) return;
   appLoaded = true;
   const script = document.createElement('script');
-  script.src = 'script.js?v=20261023-2';
+  script.src = 'script.js?v=20261023-3';
   document.body.appendChild(script);
 }
 
