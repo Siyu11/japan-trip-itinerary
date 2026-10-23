@@ -237,7 +237,14 @@ function getDayStops(day) {
       const title = links.length === 1 || !rawLabel || rawLabel === 'Google 地图'
         ? eventTitle
         : rawLabel;
-      stops.push({ title, time, note, query, mapUrl: link.href, event, linkIndex });
+      const lat = Number(link.dataset.lat);
+      const lon = Number(link.dataset.lng);
+      stops.push({
+        title, time, note, query, mapUrl: link.href,
+        travelMode: link.dataset.travelMode || '',
+        coordinates: Number.isFinite(lat) && Number.isFinite(lon) && link.dataset.lat && link.dataset.lng ? { lat, lon } : null,
+        event, linkIndex
+      });
     });
   });
   return stops;
@@ -257,9 +264,10 @@ function googleDirectionsUrl(stops, travelMode) {
 }
 
 async function geocodeStop(stop) {
+  if (stop.coordinates) return stop.coordinates;
   const cacheKey = stop.query.toLowerCase();
   if (geocodeCache[cacheKey]) return geocodeCache[cacheKey];
-  const params = new URLSearchParams({ q: stop.query, limit: '1', lang: 'zh' });
+  const params = new URLSearchParams({ q: stop.query, limit: '1' });
   const response = await fetch(`https://photon.komoot.io/api/?${params.toString()}`, { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error('Location lookup failed');
   const payload = await response.json();
@@ -274,6 +282,10 @@ async function geocodeStop(stop) {
 
 function modeLabel(mode) {
   return { walking: '步行', driving: '驾车', transit: '公共交通' }[mode] || '方式待定';
+}
+
+function routeSegmentKey(day, from, to) {
+  return `${day.id}:${from.query.toLowerCase()}=>${to.query.toLowerCase()}`;
 }
 
 function makeRouteModule(day) {
@@ -300,7 +312,7 @@ function makeRouteModule(day) {
 
   const render = async () => {
     const stops = getDayStops(day);
-    const signature = stops.map((stop) => `${stop.query}:${stop.title}`).join('|');
+    const signature = stops.map((stop) => `${stop.query}:${stop.title}:${stop.travelMode}:${stop.coordinates?.lat || ''}:${stop.coordinates?.lon || ''}`).join('|');
     const list = details.querySelector('.route-stop-list');
     const status = details.querySelector('.route-status');
     const start = details.querySelector('.route-start');
@@ -314,7 +326,9 @@ function makeRouteModule(day) {
 
     stops.forEach((stop, index) => {
       const item = document.createElement('li');
-      const segmentKey = `${day.id}:${index}`;
+      const segmentKey = index < stops.length - 1
+        ? routeSegmentKey(day, stop, stops[index + 1])
+        : '';
       item.innerHTML = `<span class="route-number">${index + 1}</span><div><strong></strong><small></small></div>`;
       item.querySelector('strong').textContent = stop.title;
       item.querySelector('small').textContent = [stop.time, stop.note].filter(Boolean).join(' · ');
@@ -332,7 +346,9 @@ function makeRouteModule(day) {
         const select = document.createElement('select');
         select.setAttribute('aria-label', `${stop.title}至${stops[index + 1].title}的交通方式`);
         select.innerHTML = '<option value="">方式待定</option><option value="walking">步行</option><option value="transit">公共交通</option><option value="driving">驾车</option>';
-        select.value = routeModes[segmentKey] || '';
+        select.value = Object.prototype.hasOwnProperty.call(routeModes, segmentKey)
+          ? routeModes[segmentKey]
+          : stop.travelMode;
         const segmentLink = document.createElement('a');
         segmentLink.target = '_blank';
         segmentLink.rel = 'noreferrer';
@@ -360,7 +376,10 @@ function makeRouteModule(day) {
     });
 
     function updateStartLink() {
-      const modes = stops.slice(0, -1).map((_, index) => routeModes[`${day.id}:${index}`] || '');
+      const modes = stops.slice(0, -1).map((stop, index) => {
+        const key = routeSegmentKey(day, stop, stops[index + 1]);
+        return Object.prototype.hasOwnProperty.call(routeModes, key) ? routeModes[key] : stop.travelMode;
+      });
       const selectedModes = [...new Set(modes.filter(Boolean))];
       const mixed = selectedModes.length > 1;
       start.href = mixed ? googleDirectionsUrl(stops.slice(0, 2), modes[0]) : googleDirectionsUrl(stops, selectedModes[0] || '');
@@ -432,7 +451,7 @@ function makeRouteModule(day) {
     lastSignature = '';
     if (details.open) render();
   });
-  observer.observe(schedule, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href'] });
+  observer.observe(schedule, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'data-travel-mode', 'data-lat', 'data-lng'] });
 }
 
 document.querySelectorAll('.day-panel').forEach(makeRouteModule);
