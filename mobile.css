@@ -3,7 +3,7 @@
 :root { --blue: #22324a; }
 .print-button { background: #172033; }
 .print-button:hover { background: #22324a; }
-.date-nav { grid-template-columns: repeat(5, 1fr); }
+.date-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
 /* Slightly quieter type scale for a denser, more practical travel view. */
 .hero h1 { font-size: clamp(42px, 6vw, 66px); }
