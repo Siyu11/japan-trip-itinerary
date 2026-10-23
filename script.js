@@ -259,12 +259,14 @@ function googleDirectionsUrl(stops, travelMode) {
 async function geocodeStop(stop) {
   const cacheKey = stop.query.toLowerCase();
   if (geocodeCache[cacheKey]) return geocodeCache[cacheKey];
-  const params = new URLSearchParams({ q: stop.query, format: 'jsonv2', limit: '1', 'accept-language': 'zh-CN' });
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, { headers: { Accept: 'application/json' } });
+  const params = new URLSearchParams({ q: stop.query, limit: '1', lang: 'zh' });
+  const response = await fetch(`https://photon.komoot.io/api/?${params.toString()}`, { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error('Location lookup failed');
-  const [match] = await response.json();
+  const payload = await response.json();
+  const [match] = payload.features || [];
   if (!match) return null;
-  const result = { lat: Number(match.lat), lon: Number(match.lon) };
+  const [lon, lat] = match.geometry.coordinates;
+  const result = { lat: Number(lat), lon: Number(lon) };
   geocodeCache[cacheKey] = result;
   try { localStorage.setItem(geocodeStorageKey, JSON.stringify(geocodeCache)); } catch {}
   return result;
