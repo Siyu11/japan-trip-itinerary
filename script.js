@@ -242,12 +242,14 @@ function getDayStops(day) {
       stops.push({
         title, time, note, query, mapUrl: link.href,
         travelMode: link.dataset.travelMode || '',
+        routePosition: link.dataset.routePosition || '',
         coordinates: Number.isFinite(lat) && Number.isFinite(lon) && link.dataset.lat && link.dataset.lng ? { lat, lon } : null,
         event, linkIndex
       });
     });
   });
-  return stops;
+  const positionOrder = { start: -1, '': 0, end: 1 };
+  return stops.sort((a, b) => (positionOrder[a.routePosition] ?? 0) - (positionOrder[b.routePosition] ?? 0));
 }
 
 function googleDirectionsUrl(stops, travelMode) {
@@ -312,7 +314,7 @@ function makeRouteModule(day) {
 
   const render = async () => {
     const stops = getDayStops(day);
-    const signature = stops.map((stop) => `${stop.query}:${stop.title}:${stop.travelMode}:${stop.coordinates?.lat || ''}:${stop.coordinates?.lon || ''}`).join('|');
+    const signature = stops.map((stop) => `${stop.query}:${stop.title}:${stop.travelMode}:${stop.routePosition}:${stop.coordinates?.lat || ''}:${stop.coordinates?.lon || ''}`).join('|');
     const list = details.querySelector('.route-stop-list');
     const status = details.querySelector('.route-status');
     const start = details.querySelector('.route-start');
@@ -451,7 +453,7 @@ function makeRouteModule(day) {
     lastSignature = '';
     if (details.open) render();
   });
-  observer.observe(schedule, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'data-travel-mode', 'data-lat', 'data-lng'] });
+  observer.observe(schedule, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'data-travel-mode', 'data-route-position', 'data-lat', 'data-lng'] });
 }
 
 document.querySelectorAll('.day-panel').forEach(makeRouteModule);
